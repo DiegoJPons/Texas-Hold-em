@@ -200,7 +200,7 @@ int server_ready(game_state_t *game) {
             remove_player(game, last_ready);
         }
 
-        return 0;
+        return -1;
     }
 
     for(int i = game->dealer_player; i < MAX_PLAYERS; i++) {
