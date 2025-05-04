@@ -28,11 +28,11 @@ void print_game_state( game_state_t *game){
 
     for (int i = 0; i < MAX_PLAYERS; i++) {
         printf("Player %d:\n", i);
-        printf("  Socket: %d\n", game->sockets[i]);
-        printf("  Status: %d\n", game->player_status[i]);
-        printf("  Stack: %d\n", game->player_stacks[i]);
-        printf("  Current Bet: %d\n", game->current_bets[i]);
-        printf("  Hand: [%d, %d]\n", game->player_hands[i][0], game->player_hands[i][1]);
+        printf("Socket: %d\n", game->sockets[i]);
+        printf("Status: %d\n", game->player_status[i]);
+        printf("Stack: %d\n", game->player_stacks[i]);
+        printf("Current Bet: %d\n", game->current_bets[i]);
+        printf("Hand: [%d, %d]\n", game->player_hands[i][0], game->player_hands[i][1]);
 
         if (game->player_status[i] == PLAYER_ACTIVE) {
             active_count++;
@@ -131,9 +131,7 @@ void server_join(game_state_t *game) {
         if(p.packet_type == JOIN) {
             game->player_status[i] = PLAYER_ACTIVE;
         }
-
     }
-
 }
 
 void set_first(game_state_t *game) {
@@ -172,7 +170,7 @@ int server_ready(game_state_t *game) {
         int bytes_read = recv(game->sockets[i], &p, sizeof(client_packet_t), 0);
 
         if (bytes_read <= 0) {
-            printf("[Server] Player %d disconnected unexpectedly.\n", i + 1);
+            printf("Player %d disconnected unexpectedly.\n", i + 1);
             game->player_status[i] = PLAYER_LEFT;
             close(game->sockets[i]);
             game->sockets[i] = -1;
@@ -187,7 +185,6 @@ int server_ready(game_state_t *game) {
         else if (p.packet_type == LEAVE){
             remove_player(game, i);
         }
-
     }
 
     game->num_players = ready;
@@ -198,7 +195,6 @@ int server_ready(game_state_t *game) {
             out.packet_type = HALT;
             send(game->sockets[last_ready], &out, sizeof(server_packet_t), 0);
         }
-
         return -1;
     }
 
@@ -236,13 +232,13 @@ void send_info_packets(game_state_t *game) {
     }
 }
 
-
 void reset_bets(game_state_t *game) {
     for (int i = 0; i < MAX_PLAYERS; i++) {
         game->current_bets[i] = 0;
     }
     game->highest_bet = 0;
 }
+
 //This was our dealing function with some of the code removed (I left the dealing so we have the same logic)
 void server_deal(game_state_t *game) {
 
@@ -263,7 +259,6 @@ void server_deal(game_state_t *game) {
     else {
         server_community(game);
     }
-
 
     int i = game->current_player;
     int num_played_players = 0;
@@ -286,7 +281,6 @@ void server_deal(game_state_t *game) {
                     remove_player(game, i);
                     break; 
                 }
-
                 action = handle_client_action(game, i, &in, &out);
             }
 
@@ -308,7 +302,6 @@ void server_deal(game_state_t *game) {
             }
         }
         if (active_players <= 1) {
-            printf("[Server] All but one player folded. Jumping to END state.\n");
             game->round_stage = ROUND_SHOWDOWN;
             server_end(game);
             break;
@@ -320,7 +313,6 @@ void server_deal(game_state_t *game) {
     }
 
 }
-
 
 int server_bet(game_state_t *game) {
     //This was our function to determine if everyone has called or folded
@@ -346,7 +338,6 @@ int check_betting_end(game_state_t *game) {
 
 void server_community(game_state_t *game) {
     //This function checked the game state and dealt new community cards if needed;
-    
     if(game->round_stage == ROUND_FLOP){
         game->community_cards[0] = game->deck[game->next_card++];
         game->community_cards[1] = game->deck[game->next_card++];
@@ -390,7 +381,7 @@ void server_end(game_state_t *game) {
 int compare_cards(const void *a, const void *b) {
     card_t card_a = *(card_t *)a;
     card_t card_b = *(card_t *)b;
-    return RANK(card_a) - RANK(card_b);  // Least to greatest
+    return RANK(card_a) - RANK(card_b);
 }
 
 int is_four_of_a_kind(card_t *player_hand, int *ranks, int *hand_value) {
@@ -436,6 +427,7 @@ int is_three_of_a_kind(card_t *player_hand, int *ranks, int *hand_value) {
 
     int tie_breaker1 = -1;
     int tie_breaker2 = -1;
+
     for (int i = 6; i >= 0; i--) {
         int r = RANK(player_hand[i]);
         if (r != rank) {
@@ -502,6 +494,7 @@ int is_one_pair(card_t *player_hand, int *ranks, int *hand_value) {
     int tie_breaker1 = -1;
     int tie_breaker2 = -1;
     int tie_breaker3 = -1;
+
     for (int i = 6; i >= 0; i--) {
         int r = RANK(player_hand[i]);
         if (r != rank) {
@@ -565,6 +558,7 @@ int is_flush(card_t *player_hand, int *suits, int *hand_value) {
     }
     
     int highest = -1;
+
     for (int i = 6; i >= 0; i--) {
         if (SUITE(player_hand[i]) == flush) {
             highest = RANK(player_hand[i]);
@@ -638,20 +632,20 @@ int high_card(card_t *player_hand) {
     for (int i = 6; i >= 0; i--) {
         value += RANK(player_hand[i]);
     }
-
     return value;
 }
 
 int evaluate_hand(game_state_t *game, player_id_t pid) {
+
     card_t player_hand[7] = {
-    game->player_hands[pid][0],
-    game->player_hands[pid][1],
-    game->community_cards[0],
-    game->community_cards[1],
-    game->community_cards[2],
-    game->community_cards[3],
-    game->community_cards[4]
-    };
+                game->player_hands[pid][0],
+                game->player_hands[pid][1],
+                game->community_cards[0],
+                game->community_cards[1],
+                game->community_cards[2],
+                game->community_cards[3],
+                game->community_cards[4]
+            };
 
     qsort(player_hand, 7, sizeof(card_t), compare_cards);
 
@@ -679,8 +673,6 @@ int evaluate_hand(game_state_t *game, player_id_t pid) {
 
 int find_winner(game_state_t *game) {
     //We wrote this function that looks at the game state and returns the player id for the best 5 card hand.
-
-
     int highest_value = -1;
     int player_with_best = -1;
 
@@ -693,6 +685,5 @@ int find_winner(game_state_t *game) {
             }
         }
     }
-
     return player_with_best;
 }

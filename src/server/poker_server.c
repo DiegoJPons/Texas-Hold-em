@@ -35,11 +35,9 @@ int main(int argc, char **argv) {
         port_nums[i] = BASE_PORT + i;
     }
 
-
     int rand_seed = argc == 2 ? atoi(argv[1]) : 0;
     init_game_state(&game, 100, rand_seed);
     shuffle_deck(game.deck);
-
 
     for(int i = 0; i < NUM_PORTS; i++) {
         if ((server_fds[i] = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -48,7 +46,7 @@ int main(int argc, char **argv) {
         }
 
         if (setsockopt(server_fds[i], SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
-            perror("setsockopt(server_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt))");
+            perror("setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))");
             exit(EXIT_FAILURE);
         }
 
@@ -93,7 +91,7 @@ int main(int argc, char **argv) {
             if (FD_ISSET(server_fds[i], &read_fds)) {
                 if (players[i].socket != 0) {
                     int temp = accept(server_fds[i], NULL, NULL);
-                    close(temp);  // Reject extra connection
+                    close(temp);
                     printf("[Server] Rejected extra connection on port %d (player already assigned).\n", port_nums[i]);
                     continue;
                 }
@@ -111,16 +109,10 @@ int main(int argc, char **argv) {
             }
         }
 
-        // Optional: break loop once all players are connected
         if (player_count == NUM_PORTS) {
             printf("[Server] All players connected.\n");
             break;
         }
-    }
-
-    printf("[Server] Current game sockets:\n");
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        printf("  Player %d: socket %d\n", i + 1, game.sockets[i]);
     }
 
     //Setup the server infrastructre and accept the 6 players on ports 2201, 2202, 2203, 2204, 2205, 2206
@@ -171,7 +163,6 @@ int main(int argc, char **argv) {
         // SHOWDOWN
         game.round_stage = ROUND_SHOWDOWN;
         server_end(&game);
-
 
         reset_game_state(&game); 
     }

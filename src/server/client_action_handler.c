@@ -86,12 +86,7 @@ int handle_client_action(game_state_t *game, player_id_t pid, const client_packe
         
     }
 
-    if(out->packet_type == NACK) {
-      build_info_packet(game, pid, out);
-      out->packet_type = NACK;
-    }
     send(game->sockets[pid], out, sizeof(server_packet_t), 0);
-    
     return (out->packet_type == NACK) ? -1 : 0;
 }
 
@@ -117,7 +112,6 @@ void build_info_packet(game_state_t *game, player_id_t pid, server_packet_t *out
             out->info.player_status[i] = 2;
         }
     }
-
 
     int community_cards = 0;
     switch (game->round_stage) {
@@ -174,5 +168,4 @@ void build_end_packet(game_state_t *game, player_id_t winner, server_packet_t *o
             out->end.player_status[i] = 2;
         }
     }
-
 }
