@@ -138,12 +138,26 @@ void server_join(game_state_t *game) {
 
 }
 
-void move_to_next_player(game_state_t *game) {
-    int next = (game->current_player + 1) % MAX_PLAYERS;
-    while (game->player_status[next] != PLAYER_ACTIVE) {
-        next = (next + 1) % MAX_PLAYERS;
+void set_first(game_state_t *game) {
+    for (int i = 1; i <= MAX_PLAYERS; i++) {
+        int player = (game->dealer_player + i) % MAX_PLAYERS;
+        if (player != game->dealer_player && (game->player_status[player] == PLAYER_ACTIVE || game->player_status[player] == PLAYER_ALLIN)) {
+            game->current_player = player;
+            return;
+        }
     }
-    game->current_player = next;
+    game->current_player = -1; 
+}
+
+void move_to_next_player(game_state_t *game) {
+    for (int i = 1; i <= MAX_PLAYERS; i++) {
+        int player = (game->current_player + i) % MAX_PLAYERS;
+        if (game->player_status[player] == PLAYER_ACTIVE || game->player_status[player] == PLAYER_ALLIN) {
+            game->current_player = player;
+            return;
+        }
+    }
+    game->current_player = -1;
 }
 
 int server_ready(game_state_t *game) {
@@ -200,6 +214,7 @@ int server_ready(game_state_t *game) {
     for(int i = game->dealer_player; i < MAX_PLAYERS; i++) {
         if(game->player_status[i] == PLAYER_ACTIVE) {
             game->dealer_player = i;
+            game->current_player = i;
             move_to_next_player(game);
             printf("Inside Server READY 1!\n");
             print_game_state(game);
@@ -210,6 +225,7 @@ int server_ready(game_state_t *game) {
     for(int i = 0; i < MAX_PLAYERS; i++) {
         if(game->player_status[i] == PLAYER_ACTIVE) {
             game->dealer_player = i;
+            game->current_player = i;
             move_to_next_player(game);
             printf("Inside Server READY 2!\n");
             print_game_state(game);
@@ -237,11 +253,16 @@ void send_info_packets(game_state_t *game) {
     }
 }
 
+
+void reset_bets(game_state_t *game) {
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        game->current_bets[i] = 0;
+    }
+    game->highest_bet = 0;
+}
 //This was our dealing function with some of the code removed (I left the dealing so we have the same logic)
 void server_deal(game_state_t *game) {
 
-    printf("Inside Server Deal!\n");
-    print_game_state(game);
     if(game->round_stage == ROUND_PREFLOP) {
         printf("Dealing Hole Cards!\n");
         for (int i = 0; i < MAX_PLAYERS; i++) {
@@ -256,16 +277,13 @@ void server_deal(game_state_t *game) {
         server_community(game);
     }
 
-    print_game_state(game);
 
     int i = game->current_player;
     int num_played_players = 0;
 
-    while(num_played_players < game->num_players){
+    while(1){
         i = game->current_player;
-        printf("Current player %d\n", i);
-        print_game_state(game);
-
+       
         if(game->player_status[i] == PLAYER_ACTIVE){
             printf("Checing action of player %d\n", i);
 
@@ -276,7 +294,6 @@ void server_deal(game_state_t *game) {
             
             int action = -1;
             while(action != 0) {
-                printf("Inside while loop chekcing action for player %d\n", i);
                 int bytes_read = recv(game->sockets[i], &in, sizeof(client_packet_t), 0);
                 if (bytes_read <= 0) {
                     printf("Player %d disconnected or read error.\n", i);
@@ -291,15 +308,17 @@ void server_deal(game_state_t *game) {
                 }
             }
 
-            if(game->player_status[i] == PLAYER_ACTIVE){
+            if (game->player_status[i] == PLAYER_ACTIVE) {
                 num_played_players++;
+                if (in.packet_type == RAISE) {
+                    num_played_players = 1; 
+                }
             }
         }
 
         move_to_next_player(game);
-        
+
         int active_players = 0;
-    
         for (int k = 0; k < MAX_PLAYERS; k++) {
             if (game->player_status[k] == PLAYER_ACTIVE) {
                 active_players++;
@@ -312,6 +331,9 @@ void server_deal(game_state_t *game) {
             break;
         }
 
+        if (check_betting_end(game) && num_played_players == game->num_players) {
+            break;
+        }
     }
 
 }
@@ -329,8 +351,14 @@ int server_bet(game_state_t *game) {
 
 // Returns 1 if all bets are the same among active players
 int check_betting_end(game_state_t *game) {
-    (void)game;
-    return 0; 
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game->player_status[i] == PLAYER_ACTIVE) {
+            if (game->current_bets[i] != game->highest_bet) {
+                return 0;
+            }
+        }
+    }
+    return 1;
 }
 
 void server_community(game_state_t *game) {
@@ -364,6 +392,8 @@ void server_end(game_state_t *game) {
     if (active_players > 1) {
         winner = find_winner(game);
     }
+
+    game->player_stacks[winner] += game->pot_size;
 
     for(int i = 0; i < MAX_PLAYERS; i++) {
         if(game->player_status[i] != PLAYER_LEFT) {

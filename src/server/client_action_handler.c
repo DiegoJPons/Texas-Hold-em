@@ -103,7 +103,17 @@ void build_info_packet(game_state_t *game, player_id_t pid, server_packet_t *out
 
     memcpy(out->info.player_stacks, game->player_stacks, MAX_PLAYERS * sizeof(int));
     memcpy(out->info.player_bets, game->current_bets, MAX_PLAYERS * sizeof(int));
-    memcpy(out->info.player_status, game->player_status, MAX_PLAYERS * sizeof(player_status_t));
+    
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game->player_status[i] == PLAYER_ACTIVE || game->player_status[i] == PLAYER_ALLIN) {
+            out->info.player_status[i] = 1;
+        } else if (game->player_status[i] == PLAYER_FOLDED) {
+            out->info.player_status[i] = 0;
+        } else {
+            out->info.player_status[i] = 2;
+        }
+    }
+
 
     int community_cards = 0;
     switch (game->round_stage) {
@@ -140,8 +150,25 @@ void build_end_packet(game_state_t *game, player_id_t winner, server_packet_t *o
     out->end.pot_size = game->pot_size;
     
     memcpy(out->end.player_cards, game->player_hands, sizeof(game->player_hands));
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if(game->player_status[i] == PLAYER_LEFT) {
+            out->end.player_cards[i][0] = NOCARD;
+            out->end.player_cards[i][1] = NOCARD;
+        }
+    }
+   
     memcpy(out->end.community_cards, game->community_cards, MAX_COMMUNITY_CARDS * sizeof(card_t));
     memcpy(out->end.player_stacks, game->player_stacks, MAX_PLAYERS * sizeof(int));
-    memcpy(out->end.player_status, game->player_status, MAX_PLAYERS * sizeof(player_status_t));
     
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (game->player_status[i] == PLAYER_ACTIVE || game->player_status[i] == PLAYER_ALLIN) {
+            out->end.player_status[i] = 1;
+        } else if (game->player_status[i] == PLAYER_FOLDED) {
+            out->end.player_status[i] = 0;
+        } else {
+            out->end.player_status[i] = 2;
+        }
+    }
+
 }

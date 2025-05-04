@@ -129,7 +129,6 @@ int main(int argc, char **argv) {
 
     server_join(&game);
 
-    print_game_state(&game);
     while (1) {
        
         printf("Inside while loop\n");
@@ -147,18 +146,24 @@ int main(int argc, char **argv) {
    
         // FLOP
         printf("FLOP ROUND\n");
+        set_first(&game);
+        reset_bets(&game);
         game.round_stage = ROUND_FLOP;
         server_deal(&game);
         if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
 
         // TURN
         printf("TURN ROUND\n");
+        set_first(&game);
+        reset_bets(&game);
         game.round_stage = ROUND_TURN;
         server_deal(&game);
         if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
 
         // RIVER
         printf("RIVER ROUND\n");
+        set_first(&game);
+        reset_bets(&game);
         game.round_stage = ROUND_RIVER;
         server_deal(&game);
         if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
