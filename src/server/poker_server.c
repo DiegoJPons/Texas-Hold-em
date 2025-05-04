@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
        
         // READY
         if (server_ready(&game) == -1) {
-            return;
+            return 0;
         }
 
         // PREFLOP
