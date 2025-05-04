@@ -131,7 +131,6 @@ int main(int argc, char **argv) {
 
     while (1) {
        
-        printf("Inside while loop\n");
         // READY
         if (!server_ready(&game)) {
             printf("[Server] Not enough players for this round.\n");
@@ -139,31 +138,26 @@ int main(int argc, char **argv) {
         }
 
         // PREFLOP
-        printf("PREFLOP ROUND\n");
         game.round_stage = ROUND_PREFLOP;
         server_deal(&game);
         if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
    
         // FLOP
-        printf("FLOP ROUND\n");
         game.round_stage = ROUND_FLOP;
         server_deal(&game);
         if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
 
         // TURN
-        printf("TURN ROUND\n");
         game.round_stage = ROUND_TURN;
         server_deal(&game);
         if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
 
         // RIVER
-        printf("RIVER ROUND\n");
         game.round_stage = ROUND_RIVER;
         server_deal(&game);
         if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
 
         // SHOWDOWN
-        printf("SHOWDOWN ROUND\n");
         game.round_stage = ROUND_SHOWDOWN;
         server_end(&game);
 

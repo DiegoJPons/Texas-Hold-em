@@ -26,7 +26,7 @@ int handle_client_action(game_state_t *game, player_id_t pid, const client_packe
     }
 
     int min_to_call = game->highest_bet - game->current_bets[pid];
-    printf("Min to call %d\n", min_to_call);
+    printf("                                                                MIN TO CALL %d\n", min_to_call);
 
     switch (in->packet_type) {
         case JOIN:
@@ -86,6 +86,10 @@ int handle_client_action(game_state_t *game, player_id_t pid, const client_packe
         
     }
 
+    if(out->packet_type == NACK) {
+      build_info_packet(game, pid, out);
+      out->packet_type = NACK;
+    }
     send(game->sockets[pid], out, sizeof(server_packet_t), 0);
     
     return (out->packet_type == NACK) ? -1 : 0;

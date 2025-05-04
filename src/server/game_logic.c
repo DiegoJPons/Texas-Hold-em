@@ -120,7 +120,6 @@ void remove_player(game_state_t *game, player_id_t pid) {
 void server_join(game_state_t *game) {
     //This function was called to get the join packets from all players
     for(int i = 0; i < MAX_PLAYERS; i++) {
-        printf("Inside server join checking player %d.\n", i);
         client_packet_t p;
 
         int bytes_read = recv(game->sockets[i], &p, sizeof(client_packet_t), 0);
@@ -130,7 +129,6 @@ void server_join(game_state_t *game) {
         }
 
         if(p.packet_type == JOIN) {
-            printf("Setting player %d as active\n", i);
             game->player_status[i] = PLAYER_ACTIVE;
         }
 
@@ -166,11 +164,9 @@ int server_ready(game_state_t *game) {
     player_id_t last_ready = 0;
     for(int i = 0; i < MAX_PLAYERS; i++) {
         if (game->player_status[i] == PLAYER_LEFT) {
-            printf("Inside player left for player %d\n", i);
             continue;
         }
 
-        printf("Waiting for response from player %d\n", i);
         client_packet_t p;
     
         int bytes_read = recv(game->sockets[i], &p, sizeof(client_packet_t), 0);
@@ -184,13 +180,11 @@ int server_ready(game_state_t *game) {
         }
 
         if (p.packet_type == READY){
-            printf("Inside packet type ready for player %d\n", i);
             game->player_status[i] = PLAYER_ACTIVE;
             ready++;
             last_ready = i;
         }
         else if (p.packet_type == LEAVE){
-            printf("Inside packet type leave for player %d\n", i);
             remove_player(game, i);
         }
 
@@ -206,8 +200,6 @@ int server_ready(game_state_t *game) {
             remove_player(game, last_ready);
         }
 
-        printf("Inside Server READY 4!\n");
-        print_game_state(game);
         return 0;
     }
 
@@ -216,8 +208,6 @@ int server_ready(game_state_t *game) {
             game->dealer_player = i;
             game->current_player = i;
             move_to_next_player(game);
-            printf("Inside Server READY 1!\n");
-            print_game_state(game);
             return 1;
         }
     }
@@ -227,23 +217,17 @@ int server_ready(game_state_t *game) {
             game->dealer_player = i;
             game->current_player = i;
             move_to_next_player(game);
-            printf("Inside Server READY 2!\n");
-            print_game_state(game);
             return 1;
         }
     }
 
     move_to_next_player(game);
-    printf("Inside Server READY 3!\n");
-    print_game_state(game);
-
     return 1;
 }
 
 void send_info_packets(game_state_t *game) {
     for(int i = 0; i < MAX_PLAYERS; i++) {
         if (game->player_status[i] != PLAYER_LEFT) {
-            printf("Sending info packet to player %d\n", i);
             server_packet_t out;
             build_info_packet(game, i, &out);
             if(send(game->sockets[i], &out, sizeof(server_packet_t), 0) < 0){
@@ -269,7 +253,6 @@ void server_deal(game_state_t *game) {
     }
 
     if(game->round_stage == ROUND_PREFLOP) {
-        printf("Dealing Hole Cards!\n");
         for (int i = 0; i < MAX_PLAYERS; i++) {
             if (game->player_status[i] == PLAYER_ACTIVE) {
                 game->player_hands[i][0] = game->deck[game->next_card++];
@@ -285,13 +268,12 @@ void server_deal(game_state_t *game) {
 
     int i = game->current_player;
     int num_played_players = 0;
+    int last_to_raise = game->current_player;
 
     while(1){
         i = game->current_player;
        
         if(game->player_status[i] == PLAYER_ACTIVE){
-            printf("Checing action of player %d\n", i);
-
             send_info_packets(game);
 
             server_packet_t out;
@@ -307,15 +289,12 @@ void server_deal(game_state_t *game) {
                 }
 
                 action = handle_client_action(game, i, &in, &out);
-                if (action != 0) { 
-                    build_info_packet(game, i, &out);
-                    send(game->sockets[i], &out, sizeof(server_packet_t), 0);
-                }
             }
 
             if (game->player_status[i] == PLAYER_ACTIVE) {
                 num_played_players++;
                 if (in.packet_type == RAISE) {
+                    last_to_raise = i;
                     num_played_players = 1; 
                 }
             }
@@ -336,7 +315,7 @@ void server_deal(game_state_t *game) {
             break;
         }
 
-        if (check_betting_end(game) && num_played_players == game->num_players) {
+        if (check_betting_end(game) && game->current_player == last_to_raise) {
             break;
         }
     }
