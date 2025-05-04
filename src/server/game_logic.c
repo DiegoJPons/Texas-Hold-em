@@ -264,8 +264,8 @@ void reset_bets(game_state_t *game) {
 void server_deal(game_state_t *game) {
 
     if(game->round_stage == ROUND_FLOP || game->round_stage == ROUND_TURN || game->round_stage == ROUND_RIVER) {
-        set_first(&game);
-        reset_bets(&game);
+        set_first(game);
+        reset_bets(game);
     }
 
     if(game->round_stage == ROUND_PREFLOP) {
