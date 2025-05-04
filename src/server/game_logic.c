@@ -138,6 +138,14 @@ void server_join(game_state_t *game) {
 
 }
 
+void move_to_next_player(game_state_t *game) {
+    int next = (game->current_player + 1) % MAX_PLAYERS;
+    while (game->player_status[next] != PLAYER_ACTIVE) {
+        next = (next + 1) % MAX_PLAYERS;
+    }
+    game->current_player = next;
+}
+
 int server_ready(game_state_t *game) {
     //This function updated the dealer and checked ready/leave status for all players
     int ready = 0;
@@ -192,6 +200,7 @@ int server_ready(game_state_t *game) {
     for(int i = game->dealer_player; i < MAX_PLAYERS; i++) {
         if(game->player_status[i] == PLAYER_ACTIVE) {
             game->dealer_player = i;
+            move_to_next_player(game);
             printf("Inside Server READY 1!\n");
             print_game_state(game);
             return 1;
@@ -201,26 +210,19 @@ int server_ready(game_state_t *game) {
     for(int i = 0; i < MAX_PLAYERS; i++) {
         if(game->player_status[i] == PLAYER_ACTIVE) {
             game->dealer_player = i;
+            move_to_next_player(game);
             printf("Inside Server READY 2!\n");
             print_game_state(game);
             return 1;
         }
     }
 
+    move_to_next_player(game);
     printf("Inside Server READY 3!\n");
     print_game_state(game);
 
     return 1;
 }
-
-void move_to_next_player(game_state_t *game) {
-    int next = (game->current_player + 1) % MAX_PLAYERS;
-    while (game->player_status[next] != PLAYER_ACTIVE) {
-        next = (next + 1) % MAX_PLAYERS;
-    }
-    game->current_player = next;
-}
-
 
 void send_info_packets(game_state_t *game) {
     for(int i = 0; i < MAX_PLAYERS; i++) {
@@ -238,7 +240,6 @@ void send_info_packets(game_state_t *game) {
 //This was our dealing function with some of the code removed (I left the dealing so we have the same logic)
 void server_deal(game_state_t *game) {
 
-    move_to_next_player(game);
     printf("Inside Server Deal!\n");
     print_game_state(game);
     if(game->round_stage == ROUND_PREFLOP) {
@@ -307,6 +308,7 @@ void server_deal(game_state_t *game) {
         if (active_players <= 1) {
             printf("[Server] All but one player folded. Jumping to END state.\n");
             game->round_stage = ROUND_SHOWDOWN;
+            server_end(game);
             break;
         }
 
@@ -350,8 +352,19 @@ void server_community(game_state_t *game) {
 
 void server_end(game_state_t *game) {
     //This function sends the end packet
-    player_id_t winner = find_winner(game);
-    int ready = 0;
+    player_id_t winner;
+    int active_players = 0;
+    
+    for (int k = 0; k < MAX_PLAYERS; k++) {
+        if (game->player_status[k] == PLAYER_ACTIVE) {
+            winner = k;
+            active_players++;
+        }
+    }
+    if (active_players > 1) {
+        winner = find_winner(game);
+    }
+
     for(int i = 0; i < MAX_PLAYERS; i++) {
         if(game->player_status[i] != PLAYER_LEFT) {
             server_packet_t out;
@@ -653,6 +666,8 @@ int evaluate_hand(game_state_t *game, player_id_t pid) {
 
 int find_winner(game_state_t *game) {
     //We wrote this function that looks at the game state and returns the player id for the best 5 card hand.
+
+
     int highest_value = -1;
     int player_with_best = -1;
 

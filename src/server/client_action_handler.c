@@ -96,14 +96,39 @@ void build_info_packet(game_state_t *game, player_id_t pid, server_packet_t *out
     out->packet_type = INFO;
     out->info.player_cards[0] = game->player_hands[pid][0];
     out->info.player_cards[1] = game->player_hands[pid][1];
-    memcpy(out->info.community_cards, game->community_cards, MAX_COMMUNITY_CARDS * sizeof(card_t));
-    memcpy(out->info.player_stacks, game->player_stacks, MAX_PLAYERS * sizeof(int));
     out->info.dealer = game->dealer_player;
     out->info.player_turn = game->current_player;
     out->info.bet_size = game->highest_bet;
+    out->info.pot_size = game->pot_size;
+
+    memcpy(out->info.player_stacks, game->player_stacks, MAX_PLAYERS * sizeof(int));
     memcpy(out->info.player_bets, game->current_bets, MAX_PLAYERS * sizeof(int));
     memcpy(out->info.player_status, game->player_status, MAX_PLAYERS * sizeof(player_status_t));
-    out->info.pot_size = game->pot_size;
+
+    int community_cards = 0;
+    switch (game->round_stage) {
+        case ROUND_PREFLOP: 
+                    community_cards = 0; 
+                    break;
+        case ROUND_FLOP: 
+                    community_cards = 3; 
+                    break;
+        case ROUND_TURN: 
+                    community_cards = 4; 
+                    break;
+        case ROUND_RIVER: 
+                    community_cards = 5; 
+                    break;
+        default: 
+                    community_cards = 0;
+                    break;
+    }
+
+
+    memcpy(out->info.community_cards, game->community_cards, community_cards * sizeof(card_t));
+    for (int i = community_cards; i < MAX_COMMUNITY_CARDS; i++) {
+        out->info.community_cards[i] = NOCARD; 
+    }
 
 }
 

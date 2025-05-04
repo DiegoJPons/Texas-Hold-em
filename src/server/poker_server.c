@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
 
     int rand_seed = argc == 2 ? atoi(argv[1]) : 0;
     init_game_state(&game, 100, rand_seed);
+    shuffle_deck(game.deck);
 
 
     for(int i = 0; i < NUM_PORTS; i++) {
@@ -142,21 +143,25 @@ int main(int argc, char **argv) {
         printf("PREFLOP ROUND\n");
         game.round_stage = ROUND_PREFLOP;
         server_deal(&game);
-
+        if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
+   
         // FLOP
         printf("FLOP ROUND\n");
         game.round_stage = ROUND_FLOP;
         server_deal(&game);
+        if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
 
         // TURN
         printf("TURN ROUND\n");
         game.round_stage = ROUND_TURN;
         server_deal(&game);
+        if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
 
         // RIVER
         printf("RIVER ROUND\n");
         game.round_stage = ROUND_RIVER;
         server_deal(&game);
+        if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
 
         // SHOWDOWN
         printf("SHOWDOWN ROUND\n");
