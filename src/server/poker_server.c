@@ -161,6 +161,10 @@ int main(int argc, char **argv) {
         server_end(&game);
 
 
+        if (server_ready(&game) == -1) {
+            break;
+        }
+        
         reset_game_state(&game); 
     }
 
