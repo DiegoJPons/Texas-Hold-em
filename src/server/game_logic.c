@@ -197,7 +197,6 @@ int server_ready(game_state_t *game) {
             server_packet_t out; 
             out.packet_type = HALT;
             send(game->sockets[last_ready], &out, sizeof(server_packet_t), 0);
-            remove_player(game, last_ready);
         }
 
         return -1;
