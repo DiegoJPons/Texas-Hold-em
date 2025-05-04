@@ -139,32 +139,40 @@ int main(int argc, char **argv) {
         // PREFLOP
         game.round_stage = ROUND_PREFLOP;
         server_deal(&game);
-        if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
+        if(game.round_stage == ROUND_SHOWDOWN)  {
+            reset_game_state(&game);
+            continue;
+        }
    
         // FLOP
         game.round_stage = ROUND_FLOP;
         server_deal(&game);
-        if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
+        if(game.round_stage == ROUND_SHOWDOWN)  {
+            reset_game_state(&game);
+            continue;
+        }
 
         // TURN
         game.round_stage = ROUND_TURN;
         server_deal(&game);
-        if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
+        if(game.round_stage == ROUND_SHOWDOWN) {
+            reset_game_state(&game);
+            continue;
+        }
 
         // RIVER
         game.round_stage = ROUND_RIVER;
         server_deal(&game);
-        if(game.round_stage == ROUND_SHOWDOWN) reset_game_state(&game); 
+        if(game.round_stage == ROUND_SHOWDOWN) {
+            reset_game_state(&game);
+            continue;
+        }
 
         // SHOWDOWN
         game.round_stage = ROUND_SHOWDOWN;
         server_end(&game);
 
 
-        if (server_ready(&game) == -1) {
-            break;
-        }
-        
         reset_game_state(&game); 
     }
 
