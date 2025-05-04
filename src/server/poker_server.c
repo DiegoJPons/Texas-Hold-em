@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
     while (1) {
        
         // READY
-        if (!server_ready(&game)) {
+        if (server_ready(&game) == 0) {
             printf("[Server] Not enough players for this round.\n");
             break;
         }
