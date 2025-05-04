@@ -57,5 +57,5 @@ int server_bet(game_state_t *game);
 void server_community(game_state_t *game);
 void server_end(game_state_t *game);
 void set_first(game_state_t *game);
-void reset_bets(game_state_t *game);
+
 #endif

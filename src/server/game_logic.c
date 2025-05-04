@@ -263,6 +263,11 @@ void reset_bets(game_state_t *game) {
 //This was our dealing function with some of the code removed (I left the dealing so we have the same logic)
 void server_deal(game_state_t *game) {
 
+    if(game->round_stage == ROUND_FLOP || game->round_stage == ROUND_TURN || game->round_stage == ROUND_RIVER) {
+        set_first(&game);
+        reset_bets(&game);
+    }
+
     if(game->round_stage == ROUND_PREFLOP) {
         printf("Dealing Hole Cards!\n");
         for (int i = 0; i < MAX_PLAYERS; i++) {
