@@ -36,4 +36,6 @@ build/            Makefile output (generated; not committed)
 
 Build targets are defined in the `makefile` (e.g. `server.*`, `client.*`, `tui.*`). Use a POSIX environment or the `.devcontainer` so GCC, `make`, and `libncurses-dev` match the project’s expectations.
 
+## Note
+
 This was a school project: the implementation is mine, but the repo began from course starter code.
