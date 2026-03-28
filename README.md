@@ -36,6 +36,4 @@ build/            Makefile output (generated; not committed)
 
 Build targets are defined in the `makefile` (e.g. `server.*`, `client.*`, `tui.*`). Use a POSIX environment or the `.devcontainer` so GCC, `make`, and `libncurses-dev` match the project’s expectations.
 
-## Note
-
-This project is for learning and portfolio use. It was generated from [BatDan24/cse220_socket_template](https://github.com/BatDan24/cse220_socket_template). It is not affiliated with any commercial poker or gaming brand.
+This was a school project: the implementation is mine, but the repo began from course starter code.
