@@ -1,18 +1,41 @@
-# Technical Projects: Systems Engineering & Low-Level Design
+# Texas Hold 'em
 
-### **Texas Hold 'em Concurrent Server**
-[cite_start]**The Challenge:** Developing a robust, multi-client server that strictly adheres to a complex communication protocol while managing the synchronized state of a six-player Texas Hold 'em game[cite: 53]. [cite_start]This project required bridging the gap between low-level network programming and high-level game logic to ensure consistent data across a distributed environment[cite: 54, 55].
+A concurrent Texas Hold 'em server in C that serves up to six clients over TCP sockets. The server follows a custom binary packet protocol (`JOIN`, `READY`, `INFO`, `ACK`/`NACK`, `END`) and keeps one synchronized game state across all connections. Game flow runs through dealing, flop, turn, river, and showdown, with hand evaluation from seven cards down to the best five.
 
-**Technical Architecture & "The Craft":**
-* **Custom Communication Protocol:** Implemented a precise packet-exchange system using `JOIN`, `READY`, `INFO`, `ACK/NACK`, and `END` packet types[cite: 115, 116, 151].
-* **Non-Blocking Logic:** Engineered the server to avoid blocking reads, ensuring it only communicates with clients at specific intervals to maintain responsiveness across all 6 player ports[cite: 168, 171].
-* **State Machine Management:** Architected a centralized game state that transitioned through five distinct phases: Dealing, Flop, Turn, River, and Showdown[cite: 175, 185, 195, 205, 215].
-* **Dynamic Player Tracking:** Developed logic to track player stacks, current bets, and active statuses (Folded, Active, or Left) to determine valid moves at each turn[cite: 122, 123, 128, 129].
-* **Advanced Hand Evaluation:** Developed a complex comparison engine to evaluate the best 5-card hand from 7 available cards[cite: 77, 78].
-* **Tie-Breaking Implementation:** Manually implemented nine hand rankings—from High Card to Straight-Flush—including specific tie-breaking rules for pairs, flushes, and straights[cite: 79, 80, 81, 82, 83].
-* **Distributed Resilience:** Engineered the server to handle "Player Left" scenarios gracefully, reassigning the dealer and turn order to ensure the game continues for remaining players[cite: 103, 219].
-* **Systems Rigor:** Utilized **GDB** for debugging state transitions and **Valgrind** to ensure memory stability throughout the server lifecycle[cite: 11, 39].
+The codebase separates networking from poker logic: a state machine drives rounds and betting, while a dedicated module ranks hands from high card through straight flush with full tie-breaking. Clients include an ncurses TUI and scripted/automated drivers for testing.
 
-> **Technical Decision Highlight:** "One of the most critical decisions was how to handle the 'Showdown' phase. Instead of just identifying a winner, I built a modular evaluation system that could be reused to calculate hand strength in real-time. By separating the hand-ranking logic (using pointer arithmetic and custom C structs) from the networking code, I was able to validate the win-determination algorithms independently before deploying them to the socket-based environment."
+## Features
 
----
+- **Protocol** — Structured packet exchange for join, readiness, game info, acknowledgements, and session end.
+- **Server** — Non-blocking read discipline so the host can service multiple player ports without blocking the whole loop.
+- **Game state** — Tracks stacks, bets, and player status (active, folded, left); advances dealer and turn order when someone leaves.
+- **Hand evaluation** — Builds the best five-card hand from hole and board cards and compares hands across standard rankings.
+- **Clients** — Interactive TUI (`ncurses`) and automated clients for scripted scenarios.
+- **Tooling** — GNU Make build, optional Google Test harness for file-comparison tests, scripted log checks under `scripts/`.
+
+## Tech stack
+
+| Area | Technologies |
+|------|----------------|
+| Core | C, GCC, POSIX sockets, GNU Make |
+| Server | Multi-client TCP, centralized game state, phased rounds |
+| Client | Socket clients, ncurses TUI |
+| Testing | Google Test (`file_comparison_test`), scripted inputs vs expected logs |
+| Dev | Dev Container (Debian, GDB, `libncurses-dev`, Googletest in Dockerfile) |
+
+## Project structure
+
+```
+include/          Public headers (protocol, game logic, utilities)
+src/server/       Poker server, game logic, client action handling
+src/client/       Socket clients, TUI, automation
+src/shared/       Shared helpers (e.g. logging, utilities)
+scripts/          Test inputs and expected player logs
+build/            Makefile output (generated; not committed)
+```
+
+Build targets are defined in the `makefile` (e.g. `server.*`, `client.*`, `tui.*`). Use a POSIX environment or the `.devcontainer` so GCC, `make`, and `libncurses-dev` match the project’s expectations.
+
+## Note
+
+This project is for learning and portfolio use. It was generated from [BatDan24/cse220_socket_template](https://github.com/BatDan24/cse220_socket_template). It is not affiliated with any commercial poker or gaming brand.
